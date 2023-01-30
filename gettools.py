@@ -145,13 +145,13 @@ def main():
 	
 	print('Extracting files from com.vmware.fusion.zip...')
 	cdszip = zipfile.ZipFile(convertpath(dest + '/tools/com.vmware.fusion.zip'), 'r')
-	cdszip.extract('payload/VMware Fusion.app/Contents/Library/isoimages/darwin.iso', path=convertpath(dest + '/tools/'))
-	cdszip.extract('payload/VMware Fusion.app/Contents/Library/isoimages/darwinPre15.iso', path=convertpath(dest + '/tools/'))
+	cdszip.extract('payload/VMware Fusion.app/Contents/Library/isoimages/x86_x64/darwin.iso', path=convertpath(dest + '/tools/'))
+	cdszip.extract('payload/VMware Fusion.app/Contents/Library/isoimages/x86_x64/darwinPre15.iso', path=convertpath(dest + '/tools/'))
 	cdszip.close()
 	
 	# Move the iso and sig files to tools folder
-	shutil.move(convertpath(dest + '/tools/payload/VMware Fusion.app/Contents/Library/isoimages/darwin.iso'), convertpath(dest + '/tools/darwin.iso'))
-	shutil.move(convertpath(dest + '/tools/payload/VMware Fusion.app/Contents/Library/isoimages/darwinPre15.iso'), convertpath(dest + '/tools/darwinPre15.iso'))
+	shutil.move(convertpath(dest + '/tools/payload/VMware Fusion.app/Contents/Library/isoimages/x86_x64/darwin.iso'), convertpath(dest + '/tools/darwin.iso'))
+	shutil.move(convertpath(dest + '/tools/payload/VMware Fusion.app/Contents/Library/isoimages/x86_x64/darwinPre15.iso'), convertpath(dest + '/tools/darwinPre15.iso'))
 	
 	# Cleanup working files and folders
 	shutil.rmtree(convertpath(dest + '/tools/payload'), True)
