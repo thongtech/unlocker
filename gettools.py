@@ -32,11 +32,12 @@ import zipfile
 import time
 
 ARCH = 'x86_x64'
+USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
 
 try:
     # For Python 3.0 and later
     # noinspection PyCompatibility
-    from urllib.request import urlopen
+    from urllib.request import Request, urlopen
     # noinspection PyCompatibility
     from html.parser import HTMLParser
     # noinspection PyCompatibility
@@ -74,19 +75,48 @@ def convertpath(path):
     # OS path separator replacement funciton
     return path.replace(os.path.sep, '/')
 	
-def reporthook(count, block_size, total_size):
-	global start_time
-	if count == 0:
-		start_time = time.time()
-		return
-	duration = time.time() - start_time
-	progress_size = int(count * block_size)
-	speed = int(progress_size / (1024 * duration)) if duration>0 else 0
-	percent = min(int(count*block_size*100/total_size),100)
-	time_remaining = ((total_size - progress_size)/1024) / speed if speed > 0 else 0
-	sys.stdout.write("\r...%d%%, %d MB, %d KB/s, %d seconds remaining" %
-					(percent, progress_size / (1024 * 1024), speed, time_remaining))
-	sys.stdout.flush()
+def reporthook(count, block_size, total_size, start_time):
+    if count == 0:
+        start_time = time.time()
+        return
+    duration = time.time() - start_time
+    progress_size = int(count * block_size)
+    speed = int(progress_size / (1024 * duration)) if duration>0 else 0
+    percent = min(int(count*block_size*100/total_size),100)
+    time_remaining = ((total_size - progress_size)/1024) / speed if speed > 0 else 0
+    sys.stdout.write("\r...%d%%, %d MB, %d KB/s, %d seconds remaining" %
+                    (percent, progress_size / (1024 * 1024), speed, time_remaining))
+    sys.stdout.flush()
+      
+# Spoofed urlopen
+def spoofed_urlopen(url):
+    req = Request(url)
+    req.add_header('User-Agent', USER_AGENT)
+    return urlopen(req)
+
+# Spoofed urlretrieve
+def spoofed_urlretrieve(url, file):
+    req = Request(url)
+    req.add_header('User-Agent', USER_AGENT)
+    response = urlopen(req)
+    total_size = response.getheader('Content-Length')
+    if total_size is not None:
+        total_size = int(total_size)
+    bytes_so_far = 0
+    start_time = time.time()
+
+    with open(file, 'wb') as out_file:
+        while True:
+            buffer = response.read(8192)
+            if not buffer:
+                break
+            out_file.write(buffer)
+            bytes_so_far += len(buffer)
+            block_size = len(buffer)
+            count = bytes_so_far // block_size
+            reporthook(count, block_size, total_size, start_time)
+
+    return file
 
 def main():
 	# Check minimal Python version is 2.7
@@ -112,7 +142,7 @@ def main():
 	# Get the list of Fusion releases
 	# And get the last item in the ul/li tags
 	
-	response = urlopen(url)
+	response = spoofed_urlopen(url)
 	html = response.read()
 	parser.clean()
 	parser.feed(str(html))
@@ -121,7 +151,7 @@ def main():
 
 	# Open the latest release page
 	# And build file URL
-	response = urlopen(url)
+	response = spoofed_urlopen(url)
 	html = response.read()
 	parser.feed(str(html))
 	
@@ -133,7 +163,7 @@ def main():
 			
 	# Get the main core file
 	try:
-		urlretrieve(urlcoretar, convertpath(dest + '/tools/com.vmware.fusion.zip.tar'), reporthook)
+		spoofed_urlretrieve(urlcoretar, convertpath(dest + '/tools/com.vmware.fusion.zip.tar'))
 	except:
 		print('Couldn\'t find tools')
 		return
