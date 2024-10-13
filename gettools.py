@@ -148,7 +148,7 @@ def main():
 	
 	print('Extracting com.vmware.fusion.zip.tar...')
 	tar = tarfile.open(convertpath(dest + '/tools/com.vmware.fusion.zip.tar'), 'r')
-	tar.extract('com.vmware.fusion.zip', path=convertpath(dest + '/tools/'))
+	tar.extract('com.vmware.fusion.zip', path=convertpath(dest + '/tools/'), filter='data')
 	tar.close()
 	
 	print('Extracting files from com.vmware.fusion.zip...')
