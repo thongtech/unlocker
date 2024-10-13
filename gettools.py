@@ -33,6 +33,10 @@ import time
 
 ARCH = 'x86_x64'
 USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
+# The last version that supports darwin tools
+FUSION_VERSION = '13.5.2'
+FUSION_BUILD = '23775688'
+FUSION_URL = f'https://softwareupdate.vmware.com/cds/vmw-desktop/fusion/{FUSION_VERSION}/{FUSION_BUILD}/universal/core/'
 
 try:
     # For Python 3.0 and later
@@ -119,7 +123,7 @@ def spoofed_urlretrieve(url, file):
     return file
 
 def main():
-	# Check minimal Python version is 2.7
+	# Check minimal Python version is 3.0
 	if sys.version_info < (3, 0):
 		sys.stderr.write('You need Python 3 or later\n')
 		sys.exit(1)
@@ -130,37 +134,11 @@ def main():
 	shutil.rmtree(dest + '/tools', True)
 	os.mkdir(dest + '/tools')
 
-	parser = CDSParser()
+	print(f'Getting tools from Fusion version {FUSION_VERSION}...')
 
-	# Last published version doesn't ship with darwin tools
-	# so in case of error get it from the core.vmware.fusion.tar
-	print('Trying to get tools from the packages folder...')
+	# Setup file path
+	urlcoretar = FUSION_URL + 'com.vmware.fusion.zip.tar'
 
-	# Setup url and file paths
-	url = 'http://softwareupdate.vmware.com/cds/vmw-desktop/fusion/'
-
-	# Get the list of Fusion releases
-	# And get the last item in the ul/li tags
-	
-	response = spoofed_urlopen(url)
-	html = response.read()
-	parser.clean()
-	parser.feed(str(html))
-	url = url + parser.HTMLDATA[-1] + '/'
-	parser.clean()
-
-	# Open the latest release page
-	# And build file URL
-	response = spoofed_urlopen(url)
-	html = response.read()
-	parser.feed(str(html))
-	
-	lastVersion = parser.HTMLDATA[-1]
-	
-	parser.clean()
-
-	urlcoretar = url + lastVersion + '/universal/core/com.vmware.fusion.zip.tar'
-			
 	# Get the main core file
 	try:
 		spoofed_urlretrieve(urlcoretar, convertpath(dest + '/tools/com.vmware.fusion.zip.tar'))
